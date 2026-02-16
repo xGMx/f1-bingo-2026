@@ -1466,6 +1466,51 @@ function selectPlayer(playerId) {
   currentCategory = Object.keys(eventCategories)[0];
 })();
 </script>
+  
+<!-- ADMIN BAR (solo per setup, poi puoi lasciarla) -->
+<div id="adminBar" style="position:fixed;bottom:12px;right:12px;z-index:9999;display:flex;gap:8px;">
+  <button id="btnAdminLogin" style="padding:10px 12px;border-radius:10px;background:#E10600;color:#fff;font-weight:700;border:none;cursor:pointer;">
+    Admin login (Google)
+  </button>
+  <button id="btnShowUid" style="padding:10px 12px;border-radius:10px;background:#2d3748;color:#fff;font-weight:700;border:none;">
+    UID: —
+  </button>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCGHO2YKuHU93uMSdAJ4cHUPCOfPADiLoQ",
+    authDomain: "f1-bingo-2026-9f795.firebaseapp.com",
+    projectId: "f1-bingo-2026-9f795",
+    storageBucket: "f1-bingo-2026-9f795.firebasestorage.app",
+    messagingSenderId: "373058712857",
+    appId: "1:373058712857:web:f7e41be2d61d8dac204188"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // login anonimo automatico per tutti
+  await signInAnonymously(auth);
+
+  const btnLogin = document.getElementById("btnAdminLogin");
+  const btnUid = document.getElementById("btnShowUid");
+
+  btnLogin.onclick = async () => {
+    console.log("Provo login Google…");
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  };
+
+  onAuthStateChanged(auth, (user) => {
+    btnUid.textContent = "UID: " + (user?.uid || "—");
+    console.log("ADMIN UID (copia questo):", user?.uid);
+  });
+</script>
 
 </body>
 </html>
+
