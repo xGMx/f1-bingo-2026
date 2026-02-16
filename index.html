@@ -1,0 +1,1447 @@
+﻿<!doctype html>
+	<html lang="it" class="h-full">
+	<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>F1 Bingo 2026</title>
+	<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+	<script src="/_sdk/element_sdk.js"></script>
+	<script src="/_sdk/data_sdk.js"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&amp;family=Rajdhani:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+	<style>
+	html, body { height: 100%; margin: 0; padding: 0; }
+	.font-orbitron { font-family: 'Orbitron', monospace; }
+	.font-rajdhani { font-family: 'Rajdhani', sans-serif; }
+	body { box-sizing: border-box; }
+	</style>
+	</head>
+	<body class="h-full m-0 p-0 overflow-auto" style="background: #1a1a2e;"><!-- DELETE CONFIRMATION MODAL -->
+	<div id="delete-modal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+	<div class="bg-gray-900 rounded-lg p-6 max-w-sm w-full" style="background: #16213e; border: 2px solid #E10600;">
+	<h2 class="font-orbitron text-2xl font-bold text-white mb-4">Conferma Eliminazione</h2>
+	<p class="font-rajdhani text-white mb-6">Sei sicuro di voler eliminare questo giocatore?</p>
+	<div class="flex gap-3">
+	<button id="confirm-delete-btn" class="flex-1 px-4 py-2 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #E10600;"> Elimina </button> <button id="cancel-delete-btn" class="flex-1 px-4 py-2 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #2d3748;"> Annulla </button>
+	</div>
+	</div>
+	</div><!-- LOCK CONFIRMATION MODAL -->
+	<div id="lock-modal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+	<div class="bg-gray-900 rounded-lg p-6 max-w-sm w-full" style="background: #16213e; border: 2px solid #E10600;">
+	<h2 class="font-orbitron text-2xl font-bold text-white mb-4">Blocca Scelte</h2>
+	<p class="font-rajdhani text-white mb-6">Vuoi bloccare queste 25 caselle per questa gara?</p>
+	<div class="flex gap-3">
+	<button id="confirm-lock-btn" class="flex-1 px-4 py-2 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #E10600;"> Blocca </button> <button id="cancel-lock-btn" class="flex-1 px-4 py-2 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #2d3748;"> Annulla </button>
+	</div>
+	</div>
+	</div><!-- BINGO MODAL -->
+	<div id="bingo-modal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+	<div class="bg-gray-900 rounded-lg p-8 max-w-sm w-full text-center" style="background: #16213e; border: 3px solid #E10600;">
+	<p class="text-5xl mb-4">BINGO!</p>
+	<h2 class="font-orbitron text-3xl font-bold text-white mb-2" style="color: #E10600;">HAI VINTO</h2>
+	<p class="font-rajdhani text-white mb-6">Hai completato una linea vincente!</p><button id="close-bingo-btn" class="w-full px-6 py-3 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #E10600;"> Ok </button>
+	</div>
+	</div><!-- RESET SEASON MODAL -->
+	<div id="reset-modal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+	<div class="bg-gray-900 rounded-lg p-6 max-w-sm w-full" style="background: #16213e; border: 2px solid #E10600;">
+	<h2 class="font-orbitron text-2xl font-bold text-white mb-4">Conferma Reset</h2>
+	<p class="font-rajdhani text-white mb-6">Eliminare tutti i giocatori?</p>
+	<div class="flex gap-3">
+	<button id="confirm-reset-btn" class="flex-1 px-4 py-2 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #E10600;"> Reset </button> <button id="cancel-reset-btn" class="flex-1 px-4 py-2 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #2d3748;"> Annulla </button>
+	</div>
+	</div>
+	</div><!-- NOTIFICATION MODAL -->
+	<div id="notify-modal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+	<div class="bg-gray-900 rounded-lg p-6 max-w-sm w-full text-center" style="background: #16213e; border: 2px solid #E10600;">
+	<p id="notify-message" class="font-rajdhani text-white text-lg mb-6"></p><button id="close-notify-btn" class="w-full px-6 py-2 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #E10600;"> Ok </button>
+	</div>
+	</div><!-- EVENT SELECTION MODAL -->
+	<div id="modal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 overflow-auto">
+	<div class="bg-gray-900 rounded-lg p-6 max-w-5xl w-full" style="background: #16213e; border: 2px solid #E10600;">
+	<h2 class="font-orbitron text-3xl font-bold text-white mb-4">Scegli 24 Eventi</h2>
+	<div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+	<div class="lg:col-span-3">
+	<div id="category-tabs" class="flex flex-wrap gap-2 mb-4"></div>
+	<div class="max-h-96 overflow-y-auto" id="events-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-content: start;"></div>
+	</div>
+	<div style="background: #1a1a2e;" class="p-4 rounded-lg h-fit flex flex-col justify-between">
+	<p class="font-orbitron text-white font-bold mb-6">Selezionati: <span id="counter">0</span>/24</p><button id="random-btn" class="w-full px-4 py-2 rounded font-rajdhani font-bold text-white mb-3 transition-all hover:scale-105" style="background: #444;"> Casuale </button> <button id="next-btn" class="w-full px-4 py-2 rounded font-rajdhani font-bold text-white" style="background: #E10600; opacity: 0.5; cursor: not-allowed;" disabled> Avanti </button>
+	</div>
+	</div>
+	</div>
+	</div><!-- CENTER CELL SELECTION MODAL -->
+	<div id="center-modal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 overflow-auto">
+	<div class="bg-gray-900 rounded-lg p-6 max-w-4xl w-full" style="background: #16213e; border: 2px solid #E10600;">
+	<h2 class="font-orbitron text-3xl font-bold text-white mb-4">Scegli la Casella Centrale</h2>
+	<p class="font-rajdhani text-white mb-6 text-center">Seleziona l'evento per la casella centrale - varrà il doppio!</p>
+	<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+	<div class="lg:col-span-2 max-h-96 overflow-y-auto" id="center-events-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-content: start;"></div>
+	<div style="background: #1a1a2e;" class="p-4 rounded-lg h-fit flex flex-col justify-between">
+	<p class="font-orbitron text-white font-bold mb-6">Selezionato: <span id="center-counter">0</span>/1</p><button id="back-btn" class="w-full px-4 py-2 rounded font-rajdhani font-bold text-white mb-3 transition-all hover:scale-105" style="background: #444;"> Indietro </button> <button id="play-btn" class="w-full px-4 py-2 rounded font-rajdhani font-bold text-white" style="background: #E10600; opacity: 0.5; cursor: not-allowed;" disabled> Gioca! </button>
+	</div>
+	</div>
+	</div>
+	</div>
+	<div class="w-full flex flex-col lg:flex-row gap-6 p-8 min-h-full"><!-- LEFT SIDEBAR: CLASSIFICA -->
+	<aside class="lg:w-80 w-full">
+	<div class="rounded-lg p-6 sticky top-8" style="background: #16213e; border: 2px solid #E10600;">
+	<h2 class="font-orbitron text-2xl font-bold text-white mb-4"><span style="color: #E10600;">CLASSIFICA</span></h2><!-- Game Selection -->
+	<div class="mb-6 p-4 rounded-lg" style="background: #1a1a2e; border: 1px solid #E10600;">
+	<p class="font-rajdhani text-sm text-white mb-2 font-bold">Scegli la gara</p><select id="race-selector" class="w-full px-3 py-2 rounded font-rajdhani text-sm mb-4" style="background: #2d3748; color: #fff; border: 2px solid #444;"></select>
+	<p class="font-rajdhani text-sm text-white mb-2 font-bold">Scegli il tuo nome</p><select id="player-selector" class="w-full px-3 py-2 rounded font-rajdhani text-sm mb-3" style="background: #2d3748; color: #fff; border: 2px solid #444;" disabled></select> <button id="start-btn" class="w-full px-4 py-2 rounded font-rajdhani font-bold text-white text-sm transition-all hover:scale-105" style="background: #E10600; opacity: 0.5; cursor: not-allowed;" disabled> Inizia Partita </button>
+	</div><!-- Add Player -->
+	<div class="mb-6 p-4 rounded-lg" style="background: #1a1a2e; border: 1px solid #E10600;">
+	<input type="text" id="new-player-name" placeholder="Nome giocatore" class="w-full px-3 py-2 rounded font-rajdhani text-sm mb-2" style="background: #2d3748; color: #fff; border: 2px solid #444;"> <button id="add-player-btn" class="w-full px-4 py-2 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #E10600;"> + Aggiungi Giocatore </button>
+	</div><!-- Players List -->
+	<div id="leaderboard" class="space-y-2 max-h-64 overflow-y-auto mb-4"></div><!-- Mini Podium -->
+	<div class="mb-4 p-4 rounded-lg" style="background: #1a1a2e; border: 2px solid #E10600;">
+	<p class="font-orbitron text-sm font-bold text-white mb-3 text-center" style="color: #E10600;">PODIO</p>
+	<div id="podium-container" style="display: flex; align-items: flex-end; justify-content: center; gap: 8px; height: 200px; width: 100%;"></div>
+	</div><button id="reset-season-btn" class="w-full px-4 py-2 rounded font-rajdhani font-bold text-white text-xs transition-all hover:scale-105" style="background: #2d3748; border: 1px solid #666;"> Reset Stagione </button>
+	</div>
+	</aside><!-- CENTER: MAIN GAME -->
+	<main class="flex-1">
+	<div class="text-center mb-8">
+	<h1 class="font-orbitron text-5xl font-black text-white mb-2" style="color: #E10600;">F1 BINGO 2026</h1>
+	</div><!-- Bingo Card -->
+	<div id="game-container" class="hidden w-full">
+	<p id="player-display" class="font-orbitron text-xl font-bold text-white mb-4 text-center" style="color: #E10600;"></p>
+	<p id="race-title" class="font-orbitron text-2xl font-bold text-white mb-4 text-center"></p>
+	<p id="lock-status" class="font-rajdhani text-center mb-4 text-sm font-bold"></p>
+	<div id="bingo-grid" class="grid grid-cols-5 gap-3 mb-6" style="max-width: 600px; margin: 0 auto;"></div>
+	<div class="text-center mb-6">
+	<p class="font-rajdhani text-white mb-4">Caselle segnate: <span id="score">0</span>/25</p><button id="toggle-lock-btn" class="px-6 py-2 rounded font-rajdhani font-bold text-white mr-2 transition-all hover:scale-105" style="background: #FFA500;"> Blocca Scelte </button> <button id="toggle-unlock-btn" class="px-6 py-2 rounded font-rajdhani font-bold text-white mr-2 transition-all hover:scale-105" style="background: #FF6B6B; display: none;"> Sblocca Scelte </button> <button id="new-game-btn" class="px-6 py-2 rounded font-rajdhani font-bold text-white" style="background: #2d3748;"> Modifica Scelte </button>
+	</div>
+	<div id="other-players-container" class="w-full"></div>
+	</div>
+	</main><!-- RIGHT SIDEBAR: RACE INFO -->
+	<aside class="lg:w-80 w-full flex flex-col gap-6"><!-- Race Scores -->
+	<div id="race-scores-container" class="rounded-lg p-6" style="background: #16213e; border: 2px solid #E10600; display: none;">
+	<p class="font-orbitron text-lg font-bold text-white mb-4 text-center" style="color: #E10600;">PUNTEGGI GARA</p>
+	<div id="race-scores-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+	</div><!-- Lock Status -->
+	<div id="lock-status-container" class="rounded-lg p-6" style="background: #16213e; border: 2px solid #E10600; display: none;">
+	<p class="font-orbitron text-lg font-bold text-white mb-4 text-center" style="color: #E10600;">STATUS BLOCCO</p>
+	<div id="locks-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+	</div><!-- Scoring Rules -->
+	<div class="rounded-lg p-6" style="background: #16213e; border: 2px solid #E10600;">
+	<p class="font-orbitron text-lg font-bold text-white mb-4 text-center" style="color: #E10600;">PUNTEGGIO</p>
+	<div class="space-y-2 font-rajdhani text-xs text-white">
+	<div class="flex justify-between items-start p-2 rounded" style="background: #2d3748;">
+	<span>Ogni casella</span> <span style="color: #ffd700; font-weight: bold;">1 pt</span>
+	</div>
+	<div class="flex justify-between items-start p-2 rounded" style="background: #2d3748;">
+	<span>Primo BINGO</span> <span style="color: #ffd700; font-weight: bold;">+20 pt</span>
+	</div>
+	<div class="flex justify-between items-start p-2 rounded" style="background: #2d3748;">
+	<span>Linea extra</span> <span style="color: #ffd700; font-weight: bold;">+10 pt</span>
+	</div>
+	<div class="flex justify-between items-start p-2 rounded" style="background: #2d3748;">
+	<span>Blackout (25/25)</span> <span style="color: #ffd700; font-weight: bold;">+50 pt</span>
+	</div>
+	<div class="flex justify-between items-start p-2 rounded" style="background: #2d3748;">
+	<span>The X (diagonali)</span> <span style="color: #ffd700; font-weight: bold;">+15 pt</span>
+	</div>
+	<div class="flex justify-between items-start p-2 rounded" style="background: #2d3748;">
+	<span>4 Angoli</span> <span style="color: #ffd700; font-weight: bold;">+10 pt</span>
+	</div>
+	<div class="flex justify-between items-start p-2 rounded" style="background: #2d3748;">
+	<span>Casella centrale</span> <span style="color: #ffd700; font-weight: bold;">2x punti</span>
+	</div>
+	</div>
+	</div><!-- Race Events -->
+	<div id="race-events-container" class="rounded-lg p-6" style="background: #16213e; border: 2px solid #E10600; display: none;">
+	<p class="font-orbitron text-lg font-bold text-white mb-4 text-center" style="color: #E10600;">EVENTI GARA</p>
+	<div id="events-mode-display" class="mb-4 text-center font-rajdhani text-sm text-white"></div>
+	<div id="race-events-list" class="space-y-2 max-h-56 overflow-y-auto mb-4"></div><button id="submit-results-btn" class="w-full px-4 py-2 rounded font-rajdhani font-bold text-white transition-all hover:scale-105" style="background: #E10600;"> Invia Risultati </button>
+	</div>
+	</aside>
+	</div>
+	<script>
+	const eventCategories = {
+	"Azione in Pista e Incidenti": [
+	"Contatto alla prima curva",
+	"Contatto al primo giro",
+	"Due DNF alla prima curva",
+	"Sorpasso al via",
+	"Sorpasso all'ultimo giro",
+	"Sorpasso della gara",
+	"Sorpasso all'esterno in una curva veloce",
+	"Sorpasso triplo sul rettilineo",
+	"Tre piloti affiancati in frenata",
+	"Qualifiche bagnate",
+	"Qualifica sospesa causa incidente",
+	"Q1, Q2 o Q3 sospeso a causa di bandiera rossa",
+	"Testacoda senza danni",
+	"Testacoda nel giro di formazione",
+	"Un pilota va lungo e usa la via di fuga",
+	"Un pilota bacia il muro ma continua la corsa",
+	"Battaglia tra compagni di squadra",
+	"Contatto tra compagni di squadra",
+	"5 Bloccaggi dell'anteriore con fumo bianco",
+	"Trenino DRS (4-5 auto in fila)",
+	"Foratura improvvisa",
+	"Detriti in pista",
+	"Oggetto in pista",
+	"Pioggia durante la gara"
+	],
+	"Tecnica, Box e Strategia": [
+	"Pit stop sotto i 2 secondi",
+	"Pit stop lento",
+	"Doppio pit stop",
+	"Errore ai box",
+	"Pilota che sbaglia la piazzola",
+	"Cambio ala anteriore",
+	"Ali anteriori danneggiate",
+	"Strategia vincente",
+	"Strategia sbagliata del muretto",
+	"Strategia estrema con una sosta ritardatissima",
+	"Problema al motore (fumo)",
+	"Ritiro per problema motore I lost power",
+	"Surriscaldamento freni o motore",
+	"Pilota che chiede il Plan B o Plan C",
+	"Pilota che ignora la chiamata al box",
+	"Due auto si toccano in Pit lane"
+	],
+	"Direzione Gara e Penalità": [
+	"Bandiera rossa",
+	"Safety Car",
+	"Virtual Safety Car (VSC)",
+	"Gara che finisce sotto Safety Car",
+	"Investigazione per Unsafe Release",
+	"3 Track limits superati",
+	"Penalità di 5 secondi",
+	"Penalità di 10 secondi",
+	"Penalità di 15 secondi",
+	"Penalità Drive-through",
+	"Penalità per impeding",
+	"Bandiera bianco-nera",
+	"Bandiera Blu ignorata",
+	"Jump Start",
+	"Pilota che sbaglia la procedura di partenza",
+	"Rookie che causa bandiera rossa"
+	],
+	"Radio e Comunicazioni": [
+	"Team radio arrabbiato",
+	"Team Radio con Bip (censurato)",
+	"Pilota che si lamenta delle gomme My tires are dead",
+	"Il pilota chiede silenzio all'ingegnere Leave me to it",
+	"Ringraziamento al team in lingua madre",
+	"Commentatore che urla per un sorpasso",
+	"Messaggio di incoraggiamento del padre di un pilota",
+	"Team radio dove si lamentano di altri team",
+	"Urlo in radio",
+	"Bip in radio dopo ritiro",
+	"Commento ironico sulle prestazioni della macchina",
+	"Il pilota canta in radio"
+	],
+	"Regia e Paddock": [
+	"Inquadratura di una celebrità",
+	"VIP che sventola la bandiera",
+	"Inquadratura di Toto Wolff arrabbiato",
+	"Inquadratura di un animale in pista",
+	"Inquadratura della fidanzata/moglie preoccupata",
+	"Meccanico che scuote la testa ai box",
+	"Team Principal che esulta",
+	"Pilota che guarda il monitor ai box dopo un ritiro",
+	"Selfie sul podio",
+	"Cambio di casco speciale",
+	"Replay di un sorpasso storico",
+	"Commentatore che urla per un sorpasso"
+	],
+
+
+“Vincita di una Vettura”: [
+
+"Vittoria di una vettura Ferrari",
+
+
+"Vittoria di una vettura McLaren",
+
+
+"Vittoria di una vettura Mercedes",
+
+
+"Vittoria di una vettura Williams",
+
+
+"Vittoria di una vettura Red Bull",
+
+
+"Vittoria di una vettura Aston Martin",
+
+
+"Vittoria di una vettura Haas",
+
+
+"Vittoria di una vettura Audi",
+
+
+"Vittoria di una vettura Cadillac",
+
+
+"Vittoria di una vettura RB Visa Card",
+
+
+"Vittoria di una vettura Alpine",
+
+
+],
+	"Risultati e Statistiche": [
+	"Prima vittoria di Lewis in Ferrari",
+	"Pole e Vittoria dello stesso pilota",
+	"Chi fa la Pole finisce P4",
+	"Chi parte dopo la P3 vince la gara",
+	"Doppietta di un solo team",
+	"Podio con tre scuderie diverse",
+	"Podio con tutti piloti inglesi",
+	"Rookie sul podio",
+	"Giro veloce stabilito all'ultimo giro",
+	"Distacco sotto i 0.100 secondi al traguardo tra il primo e secondo",
+	"Distacco sopra i 20 secondi al traguardo tra il primo e secondo",
+	"Rimonta di almeno 10 posizioni",
+	"Leader che doppia il compagno di squadra",
+	"Leader doppia tutti tranne i piloti sul podio",
+
+
+],
+
+
+“La gara finisce con…”: [
+	"La gara finisce con tutte le macchine",
+	"La gara finisce con 21 macchine",
+	"La gara finisce con 20 macchine",
+	"La gara finisce con 19 macchine",
+	"La gara finisce con 18 macchine",
+	"La gara finisce con 17 macchine",
+	"La gara finisce con 16 macchine",
+	"La gara finisce con 15 macchine",
+	"La gara finisce con 14 macchine",
+	"La gara finisce con 13 macchine",
+	"La gara finisce con 12 macchine",
+	"La gara finisce con 11 macchine",
+	"La gara finisce con 10 macchine",
+
+
+],
+
+
+“Driver of the Day…”: [
+	"Driver of the Day - Gasly",
+	"Driver of the Day - Colapinto",
+	"Driver of the Day - Alonso",
+	"Driver of the Day - Stroll",
+	"Driver of the Day - Hulkenberg",
+	"Driver of the Day - Bortoleto",
+	"Driver of the Day - Perez",
+	"Driver of the Day - Bottas",
+	"Driver of the Day - Leclerc",
+	"Driver of the Day - Hamilton",
+	"Driver of the Day - Ocon",
+	"Driver of the Day - Bearman",
+	"Driver of the Day - Norris",
+	"Driver of the Day - Piastri",
+	"Driver of the Day - Russell",
+	"Driver of the Day - Antonelli",
+	"Driver of the Day - Lawson",
+	"Driver of the Day - Lindblad",
+	"Driver of the Day - Verstappen",
+	"Driver of the Day - Hadjar",
+	"Driver of the Day - Sainz",
+	"Driver of the Day - Albon"
+	]
+	};
+	
+
+	const allEvents = Object.values(eventCategories).flat();
+	const centerCellEvents = [
+	"Vittoria di Gasly",
+	"Vittoria di Colapinto",
+	"Vittoria di Alonso",
+	"Vittoria di Stroll",
+	"Vittoria di Hulkenberg",
+	"Vittoria di Bortoleto",
+	"Vittoria di Perez",
+	"Vittoria di Bottas",
+	"Vittoria di Leclerc",
+	"Vittoria di Hamilton",
+	"Vittoria di Ocon",
+	"Vittoria di Bearman",
+	"Vittoria di Norris",
+	"Vittoria di Piastri",
+	"Vittoria di Russell",
+	"Vittoria di Antonelli",
+	"Vittoria di Lawson",
+	"Vittoria di Lindblad",
+	"Vittoria di Verstappen",
+	"Vittoria di Hadjar",
+	"Vittoria di Sainz",
+	"Vittoria di Albon"
+	];
+	
+
+	const raceNames = [
+	"1. GP Australia", "2. GP Cina", "3. GP Giappone", "4. GP Bahrain",
+	"5. GP Arabia Saudita", "6. GP Miami", "7. GP Canada", "8. GP Monaco",
+	"9. GP Catalunya", "10. GP Austria", "11. GP Gran Bretagna", "12. GP Belgio",
+	"13. GP Ungheria", "14. GP Olanda", "15. GP Italia", "16. GP Spagna",
+	"17. GP Azerbaigian", "18. GP Singapore", "19. GP Austin", "20. GP Messico",
+	"21. GP Brasile", "22. GP Las Vegas", "23. GP Qatar", "24. GP Abu Dhabi"
+	];
+	
+
+	let selectedIndices = new Set();
+	let centerCellIndex = null;
+	let selectedEvents = [];
+	let markedCells = new Set();
+	let bingoAchieved = false;
+	let currentPlayer = null;
+	let currentRace = null;
+	let allPlayers = [];
+	let playerToDelete = null;
+	let isRaceLocked = false;
+	let currentCategory = null;
+	let selectedRaceEvents = new Set();
+	let resultsSubmitted = false;
+	
+
+	function calculatePoints(markedSet) {
+	let points = 0;
+	markedSet.forEach(idx => {
+	points += idx === 12 ? 2 : 1;
+	});
+	const lines = [
+	[0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24],
+	[0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24],
+	[0,6,12,18,24], [4,8,12,16,20]
+	];
+	let bingoCount = 0;
+	lines.forEach((line) => {
+	if (line.every(i => markedSet.has(i))) {
+	points += bingoCount === 0 ? 20 : 10;
+	bingoCount++;
+	}
+	});
+	if (markedSet.has(0) && markedSet.has(4) && markedSet.has(20) && markedSet.has(24)) {
+	points += 10;
+	}
+	if (markedSet.size === 25) {
+	points += 50;
+	}
+	return points;
+	}
+	
+
+	function checkBingoStatus(markedSet) {
+	const lines = [
+	[0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24],
+	[0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24],
+	[0,6,12,18,24], [4,8,12,16,20]
+	];
+	return lines.some(line => line.every(i => markedSet.has(i)));
+	}
+	
+
+	function checkRaceLocked(player) {
+	if (!player || !currentRace) return false;
+	let locks = {};
+	if (player.race_locks) {
+	try {
+	locks = JSON.parse(player.race_locks);
+	} catch (e) {}
+	}
+	return locks[`race_${currentRace}`] || false;
+	}
+	
+
+	function updateStartButton() {
+	const startBtn = document.getElementById('start-btn');
+	if (currentRace && currentPlayer) {
+	startBtn.disabled = false;
+	startBtn.style.opacity = '1';
+	startBtn.style.cursor = 'pointer';
+	} else {
+	startBtn.disabled = true;
+	startBtn.style.opacity = '0.5';
+	startBtn.style.cursor = 'not-allowed';
+	}
+	}
+	
+
+	const dataHandler = {
+	onDataChanged(data) {
+	allPlayers = data;
+	renderLeaderboard();
+	updatePlayerSelector();
+	if (currentRace && currentPlayer) {
+	currentPlayer = allPlayers.find(p => p.__backendId === currentPlayer.__backendId);
+	renderRaceScores();
+	renderLockStatus();
+	renderOtherPlayersCards();
+	}
+	}
+	};
+	
+
+	async function initDataSDK() {
+	if (window.dataSdk) {
+	await window.dataSdk.init(dataHandler);
+	}
+	}
+	
+
+	function renderLeaderboard() {
+	const leaderboard = document.getElementById('leaderboard');
+	leaderboard.innerHTML = '';
+	const sorted = [...allPlayers].sort((a, b) => b.total_points - a.total_points);
+	sorted.forEach((player) => {
+	const el = document.createElement('div');
+	el.className = 'p-3 rounded-lg cursor-pointer transition-all font-rajdhani';
+	el.style.background = currentPlayer && currentPlayer.__backendId === player.__backendId ? '#E10600' : '#2d3748';
+	el.style.border = `2px solid ${currentPlayer && currentPlayer.__backendId === player.__backendId ? '#E10600' : '#444'}`;
+	el.innerHTML = `
+	<div class="flex justify-between items-center">
+	<div class="flex-1">
+	<p class="text-white font-bold">${player.player_name}</p>
+	<p class="text-sm" style="color: #ffd700;">* ${player.total_points} punti</p>
+	</div>
+	<div class="flex gap-1">
+	<button onclick="selectPlayer('${player.__backendId}')" class="px-2 py-1 rounded text-xs font-bold text-white transition-all hover:scale-105" style="background: #444;">
+	Scegli
+	</button>
+	<button onclick="deletePlayer('${player.__backendId}')" class="px-2 py-1 rounded text-xs font-bold text-white bg-red-600 transition-all hover:scale-105">
+	X
+	</button>
+	</div>
+	</div>
+	`;
+	leaderboard.appendChild(el);
+	});
+	renderPodium(sorted);
+	}
+	
+
+	function renderPodium(sorted) {
+	const podiumContainer = document.getElementById('podium-container');
+	podiumContainer.innerHTML = '';
+	const top3 = sorted.slice(0, 3);
+	const podiumOrder = [1, 0, 2];
+	const heights = ['80px', '120px', '60px'];
+	podiumOrder.forEach((idx, position) => {
+	const columnDiv = document.createElement('div');
+	columnDiv.style.flex = '1';
+	columnDiv.style.display = 'flex';
+	columnDiv.style.flexDirection = 'column';
+	columnDiv.style.alignItems = 'center';
+	columnDiv.style.justifyContent = 'flex-end';
+	if (top3[idx]) {
+	const medalEmoji = position === 0 ? '🥈' : position === 1 ? '🥇' : '🥉';
+	columnDiv.innerHTML = `
+	<div style="text-align: center; margin-bottom: 8px; font-size: 32px; line-height: 1;">${medalEmoji}</div>
+	<div class="w-full rounded-t-lg" style="background: #E10600; height: ${heights[position]};"></div>
+	<div style="text-align: center; margin-top: 8px; font-size: 12px; color: #fff; font-weight: bold; word-break: break-word; max-width: 80px;">${top3[idx].player_name}</div>
+	`;
+	} else {
+	columnDiv.innerHTML = `
+	<div class="w-full rounded-t-lg" style="background: #444; height: ${heights[position]};"></div>
+	<div style="text-align: center; margin-top: 8px; font-size: 12px; color: #999;">-</div>
+	`;
+	}
+	podiumContainer.appendChild(columnDiv);
+	});
+	}
+	
+
+	function updatePlayerSelector() {
+	const selector = document.getElementById('player-selector');
+	selector.innerHTML = '<option value="">-- Scegli un giocatore --</option>';
+	allPlayers.forEach(player => {
+	const option = document.createElement('option');
+	option.value = player.__backendId;
+	option.textContent = player.player_name;
+	selector.appendChild(option);
+	});
+	}
+	
+
+	function initRaceSelector() {
+	const selector = document.getElementById('race-selector');
+	selector.innerHTML = '<option value="">-- Scegli una gara --</option>';
+	raceNames.forEach((name, index) => {
+	const option = document.createElement('option');
+	option.value = index + 1;
+	option.textContent = name;
+	selector.appendChild(option);
+	});
+	selector.addEventListener('change', (e) => {
+	currentRace = e.target.value ? parseInt(e.target.value) : null;
+	document.getElementById('player-selector').value = '';
+	currentPlayer = null;
+	updateStartButton();
+	if (currentRace) {
+	document.getElementById('player-selector').disabled = false;
+	document.getElementById('race-scores-container').style.display = 'block';
+	document.getElementById('lock-status-container').style.display = 'block';
+	document.getElementById('race-events-container').style.display = 'block';
+	renderRaceScores();
+	renderLockStatus();
+	loadRaceEvents();
+	} else {
+	document.getElementById('player-selector').disabled = true;
+	document.getElementById('start-btn').disabled = true;
+	document.getElementById('start-btn').style.opacity = '0.5';
+	document.getElementById('race-scores-container').style.display = 'none';
+	document.getElementById('lock-status-container').style.display = 'none';
+	document.getElementById('race-events-container').style.display = 'none';
+	}
+	});
+	
+
+	document.getElementById('player-selector').addEventListener('change', (e) => {
+	const playerId = e.target.value;
+	if (playerId) {
+	currentPlayer = allPlayers.find(p => p.__backendId === playerId);
+	} else {
+	currentPlayer = null;
+	}
+	updateStartButton();
+	});
+	}
+	
+
+	function renderRaceScores() {
+	const container = document.getElementById('race-scores-list');
+	container.innerHTML = '';
+	if (!currentRace) return;
+	const raceKey = `race_${currentRace}`;
+	const raceScores = [];
+	allPlayers.forEach(player => {
+	const raceData = player[raceKey];
+	let points = 0, bingo = false;
+	if (raceData) {
+	try {
+	const parsed = JSON.parse(raceData);
+	points = parsed.points || 0;
+	bingo = parsed.bingo || false;
+	} catch (e) {}
+	}
+	raceScores.push({ playerName: player.player_name, points, bingo });
+	});
+	raceScores.sort((a, b) => b.points - a.points);
+	raceScores.forEach((score, index) => {
+	const el = document.createElement('div');
+	el.className = 'p-2 rounded font-rajdhani text-white flex justify-between items-center text-sm';
+	el.style.background = '#2d3748';
+	el.style.border = '1px solid #444';
+	let medal = '';
+	if (index === 0 && score.points > 0) medal = '🥇';
+	else if (index === 1 && score.points > 0) medal = '🥈';
+	else if (index === 2 && score.points > 0) medal = '🥉';
+	const bingo = score.bingo ? ' ⭐' : '';
+	el.innerHTML = `<span>${medal} ${score.playerName}</span><span style="color: #ffd700; font-weight: bold;">* ${score.points}${bingo}</span>`;
+	container.appendChild(el);
+	});
+	}
+	
+
+	function renderLockStatus() {
+	const container = document.getElementById('locks-list');
+	container.innerHTML = '';
+	if (!currentRace) return;
+	const raceKey = `race_${currentRace}`;
+	const lockStatus = [];
+	allPlayers.forEach(player => {
+	const isLocked = checkRaceLocked(player);
+	lockStatus.push({ playerName: player.player_name, isLocked });
+	});
+	lockStatus.sort((a, b) => a.playerName.localeCompare(b.playerName));
+	lockStatus.forEach((lock) => {
+	const el = document.createElement('div');
+	el.className = 'p-2 rounded font-rajdhani text-white flex justify-between items-center text-xs';
+	el.style.background = lock.isLocked ? '#1a3a1a' : '#2d3748';
+	el.style.border = `1px solid ${lock.isLocked ? '#4a8f4a' : '#444'}`;
+	const lockText = lock.isLocked ? '🔒 BLOCCATO' : '🔓 SBLOCCATO';
+	el.innerHTML = `<span class="font-bold">${lock.playerName}</span><span>${lockText}</span>`;
+	container.appendChild(el);
+	});
+	}
+	
+
+	function renderCategoryTabs() {
+	const tabsContainer = document.getElementById('category-tabs');
+	tabsContainer.innerHTML = '';
+	Object.keys(eventCategories).forEach((categoryName) => {
+	const tab = document.createElement('button');
+	tab.className = 'px-3 py-2 rounded font-rajdhani font-bold text-xs transition-all hover:scale-105';
+	tab.style.background = currentCategory === categoryName ? '#E10600' : '#2d3748';
+	tab.style.color = '#fff';
+	tab.style.border = `2px solid ${currentCategory === categoryName ? '#E10600' : '#444'}`;
+	tab.textContent = categoryName;
+	tab.addEventListener('click', () => {
+	currentCategory = categoryName;
+	renderCategoryTabs();
+	renderEventsList();
+	});
+	tabsContainer.appendChild(tab);
+	});
+	}
+	
+
+	function renderEventsList() {
+	const container = document.getElementById('events-container');
+	container.innerHTML = '';
+	const categoryEvents = eventCategories[currentCategory] || [];
+	categoryEvents.forEach((event) => {
+	const globalIndex = allEvents.indexOf(event);
+	const isSelected = selectedIndices.has(globalIndex);
+	const el = document.createElement('div');
+	el.className = 'rounded cursor-pointer font-rajdhani text-white transition-all flex items-center justify-center';
+	el.style.background = isSelected ? '#E10600' : '#2d3748';
+	el.style.border = `2px solid ${isSelected ? '#E10600' : '#444'}`;
+	el.style.width = '100px';
+	el.style.height = '100px';
+	el.style.textAlign = 'center';
+	el.style.fontSize = '11px';
+	el.style.padding = '8px';
+	el.style.fontWeight = 'bold';
+	el.style.wordWrap = 'break-word';
+	el.textContent = event;
+	if (selectedIndices.size === 24 && !isSelected) {
+	el.style.opacity = '0.5';
+	el.style.cursor = 'not-allowed';
+	el.style.pointerEvents = 'none';
+	} else {
+	el.addEventListener('click', () => toggleEvent(globalIndex));
+	}
+	container.appendChild(el);
+	});
+	}
+	
+
+	function toggleEvent(index) {
+	if (selectedIndices.has(index)) {
+	selectedIndices.delete(index);
+	} else if (selectedIndices.size < 24) {
+	selectedIndices.add(index);
+	}
+	renderEventsList();
+	updatePreview();
+	}
+	
+
+	function updatePreview() {
+	const counter = document.getElementById('counter');
+	const nextBtn = document.getElementById('next-btn');
+	counter.textContent = selectedIndices.size;
+	nextBtn.disabled = selectedIndices.size !== 24;
+	nextBtn.style.opacity = selectedIndices.size === 24 ? '1' : '0.5';
+	nextBtn.style.cursor = selectedIndices.size === 24 ? 'pointer' : 'not-allowed';
+	}
+	
+
+	document.getElementById('random-btn').addEventListener('click', () => {
+	selectedIndices.clear();
+	const validIndices = Array.from({length: allEvents.length}, (_, i) => i);
+	const randomIndices = validIndices.sort(() => Math.random() - 0.5).slice(0, 24);
+	randomIndices.forEach(i => selectedIndices.add(i));
+	currentCategory = Object.keys(eventCategories)[0];
+	renderCategoryTabs();
+	renderEventsList();
+	updatePreview();
+	});
+	
+
+	function renderCenterEventsList() {
+	const container = document.getElementById('center-events-container');
+	container.innerHTML = '';
+	centerCellEvents.forEach((event, idx) => {
+	const isSelected = centerCellIndex === idx;
+	const el = document.createElement('div');
+	el.className = 'rounded cursor-pointer font-rajdhani text-white transition-all flex items-center justify-center';
+	el.style.background = isSelected ? '#ffd700' : '#2d3748';
+	el.style.border = `3px solid ${isSelected ? '#ffd700' : '#444'}`;
+	el.style.width = '100px';
+	el.style.height = '100px';
+	el.style.textAlign = 'center';
+	el.style.fontSize = '11px';
+	el.style.padding = '8px';
+	el.style.fontWeight = 'bold';
+	el.style.wordWrap = 'break-word';
+	el.style.color = isSelected ? '#000' : '#fff';
+	el.innerHTML = isSelected ? event + '<br>✓' : event;
+	el.addEventListener('click', () => selectCenterCell(idx));
+	container.appendChild(el);
+	});
+	}
+	
+
+	function selectCenterCell(index) {
+	centerCellIndex = centerCellIndex === index ? null : index;
+	renderCenterEventsList();
+	updateCenterPreview();
+	}
+	
+
+	function updateCenterPreview() {
+	const counter = document.getElementById('center-counter');
+	const playBtn = document.getElementById('play-btn');
+	counter.textContent = centerCellIndex !== null ? '1' : '0';
+	playBtn.disabled = centerCellIndex === null;
+	playBtn.style.opacity = centerCellIndex !== null ? '1' : '0.5';
+	playBtn.style.cursor = centerCellIndex !== null ? 'pointer' : 'not-allowed';
+	}
+	
+
+	document.getElementById('next-btn').addEventListener('click', () => {
+	centerCellIndex = null;
+	renderCenterEventsList();
+	updateCenterPreview();
+	document.getElementById('modal').classList.add('hidden');
+	document.getElementById('center-modal').classList.remove('hidden');
+	});
+	
+
+	document.getElementById('back-btn').addEventListener('click', () => {
+	document.getElementById('center-modal').classList.add('hidden');
+	document.getElementById('modal').classList.remove('hidden');
+	});
+	
+
+	function renderBingoCard() {
+	const grid = document.getElementById('bingo-grid');
+	grid.innerHTML = '';
+	selectedEvents.forEach((event, index) => {
+	const cell = document.createElement('div');
+	cell.className = 'aspect-square rounded-lg p-2 flex items-center justify-center text-center transition-all font-rajdhani text-sm font-bold';
+	cell.style.cursor = isRaceLocked ? 'not-allowed' : 'pointer';
+	cell.style.background = markedCells.has(index) ? '#E10600' : '#2d3748';
+	cell.style.border = `2px solid ${markedCells.has(index) ? '#E10600' : '#444'}`;
+	cell.style.color = '#fff';
+	if (index === 12) {
+	cell.style.border = `3px solid #ffd700`;
+	if (markedCells.has(index)) cell.style.boxShadow = '0 0 10px #ffd700';
+	}
+	cell.textContent = event;
+	if (!isRaceLocked) {
+	cell.addEventListener('click', () => toggleCell(index));
+	}
+	grid.appendChild(cell);
+	});
+	updateScore();
+	}
+	
+
+	function toggleCell(index) {
+	if (isRaceLocked) return;
+	if (markedCells.has(index)) {
+	markedCells.delete(index);
+	} else {
+	markedCells.add(index);
+	}
+	renderBingoCard();
+	renderOtherPlayersCards();
+	saveGameData();
+	checkBingo();
+	}
+	
+
+	function updateScore() {
+	document.getElementById('score').textContent = markedCells.size;
+	}
+	
+
+	function checkBingo() {
+	if (bingoAchieved) return;
+	const lines = [
+	[0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24],
+	[0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24],
+	[0,6,12,18,24], [4,8,12,16,20]
+	];
+	for (const line of lines) {
+	if (line.every(i => markedCells.has(i))) {
+	bingoAchieved = true;
+	saveGameData();
+	document.getElementById('bingo-modal').classList.remove('hidden');
+	return;
+	}
+	}
+	}
+	
+
+	function updateLockStatus() {
+	const statusEl = document.getElementById('lock-status');
+	const toggleLockBtn = document.getElementById('toggle-lock-btn');
+	const toggleUnlockBtn = document.getElementById('toggle-unlock-btn');
+	if (isRaceLocked) {
+	statusEl.textContent = '🔒 Scelte BLOCCATE per questa gara';
+	statusEl.style.color = '#E10600';
+	toggleLockBtn.style.display = 'none';
+	toggleUnlockBtn.style.display = 'inline-block';
+	} else {
+	statusEl.textContent = '🔓 Scelte NON bloccate';
+	statusEl.style.color = '#FFA500';
+	toggleLockBtn.style.display = 'inline-block';
+	toggleUnlockBtn.style.display = 'none';
+	}
+	}
+	
+
+	function renderOtherPlayersCards() {
+	const container = document.getElementById('other-players-container');
+	container.innerHTML = '';
+	if (!currentRace) return;
+	const raceKey = `race_${currentRace}`;
+	const otherPlayers = allPlayers.filter(p => p.__backendId !== currentPlayer.__backendId);
+	if (otherPlayers.length === 0) return;
+	otherPlayers.sort((a, b) => {
+	const aData = a[raceKey];
+	const bData = b[raceKey];
+	let aPoints = 0, bPoints = 0;
+	if (aData) {
+	try {
+	aPoints = JSON.parse(aData).points || 0;
+	} catch (e) {}
+	}
+	if (bData) {
+	try {
+	bPoints = JSON.parse(bData).points || 0;
+	} catch (e) {}
+	}
+	return bPoints - aPoints;
+	});
+	let displayCount = 0;
+	otherPlayers.forEach((player) => {
+	const raceData = player[raceKey];
+	if (!raceData) return;
+	try {
+	const parsed = JSON.parse(raceData);
+	const playerEvents = parsed.events || [];
+	const playerMarkedIndices = parsed.marked_indices || [];
+	const playerPoints = parsed.points || 0;
+	const playerBingo = parsed.bingo || false;
+	if (playerEvents.length === 0) return;
+	const playerIsLocked = checkRaceLocked(player);
+	const playerCard = document.createElement('div');
+	playerCard.style.marginBottom = '1.5rem';
+	playerCard.style.padding = '1.5rem';
+	playerCard.style.borderRadius = '0.5rem';
+	playerCard.style.maxWidth = '600px';
+	playerCard.style.width = 'calc(100% - 3rem)';
+	playerCard.style.margin = '1.5rem auto';
+	playerCard.style.background = '#16213e';
+	playerCard.style.border = playerIsLocked ? '2px solid #E10600' : '2px solid #444';
+	const medal = displayCount === 0 ? '🥇' : displayCount === 1 ? '🥈' : displayCount === 2 ? '🥉' : '';
+	const bingoIcon = playerBingo ? ' ⭐ BINGO' : '';
+	const lockIcon = playerIsLocked ? ' 🔒' : '';
+	const titleEl = document.createElement('h3');
+	titleEl.className = 'font-orbitron text-xl font-bold text-white mb-4 text-center';
+	titleEl.innerHTML = `${medal} ${player.player_name}${lockIcon} <span style="color: #ffd700;">* ${playerPoints}${bingoIcon}</span>`;
+	playerCard.appendChild(titleEl);
+	const gridContainer = document.createElement('div');
+	gridContainer.style.display = 'grid';
+	gridContainer.style.gridTemplateColumns = 'repeat(5, 1fr)';
+	gridContainer.style.gap = '8px';
+	gridContainer.style.marginBottom = '1rem';
+	gridContainer.style.maxWidth = '400px';
+	gridContainer.style.margin = '0 auto 1rem auto';
+	playerEvents.forEach((event, idx) => {
+	const cellDiv = document.createElement('div');
+	cellDiv.style.aspectRatio = '1 / 1';
+	cellDiv.style.borderRadius = '8px';
+	cellDiv.style.padding = '8px';
+	cellDiv.style.textAlign = 'center';
+	cellDiv.style.fontSize = '11px';
+	cellDiv.style.color = '#fff';
+	cellDiv.style.fontWeight = 'bold';
+	cellDiv.style.display = 'flex';
+	cellDiv.style.alignItems = 'center';
+	cellDiv.style.justifyContent = 'center';
+	cellDiv.style.wordWrap = 'break-word';
+	cellDiv.style.overflow = 'hidden';
+	const isMarked = playerMarkedIndices.includes(idx);
+	const isCentre = idx === 12;
+	cellDiv.style.background = isMarked ? '#E10600' : '#2d3748';
+	cellDiv.style.border = isCentre ? '3px solid #ffd700' : `2px solid ${isMarked ? '#E10600' : '#444'}`;
+	cellDiv.style.cursor = playerIsLocked ? 'not-allowed' : 'pointer';
+	cellDiv.style.transition = 'all 0.2s ease';
+	if (playerIsLocked) {
+	cellDiv.style.opacity = '0.7';
+	}
+	cellDiv.textContent = event;
+	if (!playerIsLocked) {
+	cellDiv.addEventListener('click', async () => {
+	const newMarkedIndices = [...playerMarkedIndices];
+	const indexInArray = newMarkedIndices.indexOf(idx);
+	if (indexInArray > -1) {
+	newMarkedIndices.splice(indexInArray, 1);
+	} else {
+	newMarkedIndices.push(idx);
+	}
+	const markedSet = new Set(newMarkedIndices);
+	const updatedRaceData = JSON.stringify({
+	points: calculatePoints(markedSet),
+	bingo: checkBingoStatus(markedSet),
+	events: playerEvents,
+	marked_indices: newMarkedIndices
+	});
+	const updated = { ...player, [raceKey]: updatedRaceData };
+	if (window.dataSdk) {
+	await window.dataSdk.update(updated);
+	}
+	});
+	}
+	gridContainer.appendChild(cellDiv);
+	});
+	playerCard.appendChild(gridContainer);
+	container.appendChild(playerCard);
+	displayCount++;
+	} catch (e) {}
+	});
+	}
+	
+
+	async function saveGameData() {
+	if (!currentPlayer || !currentRace) return;
+	const raceKey = `race_${currentRace}`;
+	const raceData = {
+	points: calculatePoints(markedCells),
+	bingo: checkBingoStatus(markedCells),
+	events: selectedEvents,
+	marked_indices: Array.from(markedCells)
+	};
+	const updated = { ...currentPlayer, [raceKey]: JSON.stringify(raceData) };
+	if (window.dataSdk) {
+	await window.dataSdk.update(updated);
+	}
+	}
+	
+
+	function loadRaceEvents() {
+	selectedRaceEvents.clear();
+	resultsSubmitted = false;
+	if (currentRace && allPlayers.length > 0) {
+	const raceKey = `race_results_${currentRace}`;
+	for (const player of allPlayers) {
+	if (player.race_results) {
+	try {
+	const results = JSON.parse(player.race_results);
+	if (results[raceKey]) {
+	selectedRaceEvents = new Set(results[raceKey]);
+	resultsSubmitted = true;
+	break;
+	}
+	} catch (e) {}
+	}
+	}
+	}
+	renderRaceEventsList();
+	}
+	
+
+	function renderRaceEventsList() {
+	const container = document.getElementById('race-events-list');
+	const modeDisplay = document.getElementById('events-mode-display');
+	const submitBtn = document.getElementById('submit-results-btn');
+	
+
+	container.innerHTML = '';
+	
+
+	if (resultsSubmitted) {
+	modeDisplay.textContent = '✅ Risultati Inviati';
+	modeDisplay.style.color = '#4a8f4a';
+	submitBtn.style.display = 'none';
+	} else {
+	modeDisplay.textContent = '📝 Seleziona gli eventi...';
+	modeDisplay.style.color = '#ffd700';
+	submitBtn.style.display = 'block';
+	}
+	
+
+	allEvents.forEach((event, index) => {
+	const isSelected = selectedRaceEvents.has(index);
+	const el = document.createElement('div');
+	el.className = 'rounded font-rajdhani text-white transition-all p-2 flex items-center justify-between text-sm';
+	el.style.background = isSelected ? '#E10600' : '#2d3748';
+	el.style.border = `1px solid ${isSelected ? '#E10600' : '#444'}`;
+	el.style.cursor = resultsSubmitted ? 'not-allowed' : 'pointer';
+	
+
+	const checkbox = document.createElement('input');
+	checkbox.type = 'checkbox';
+	checkbox.checked = isSelected;
+	checkbox.style.marginRight = '8px';
+	checkbox.disabled = resultsSubmitted;
+	checkbox.addEventListener('change', () => {
+	if (isSelected) {
+	selectedRaceEvents.delete(index);
+	} else {
+	selectedRaceEvents.add(index);
+	}
+	renderRaceEventsList();
+	});
+	
+
+	el.appendChild(checkbox);
+	el.appendChild(document.createTextNode(event));
+	container.appendChild(el);
+	});
+	}
+	
+
+	document.getElementById('submit-results-btn').addEventListener('click', async () => {
+	if (selectedRaceEvents.size === 0) {
+	document.getElementById('notify-message').textContent = 'Seleziona almeno un evento!';
+	document.getElementById('notify-modal').classList.remove('hidden');
+	return;
+	}
+	
+
+	const raceKey = `race_results_${currentRace}`;
+	
+
+	for (const player of allPlayers) {
+	let raceResults = {};
+	if (player.race_results) {
+	try {
+	raceResults = JSON.parse(player.race_results);
+	} catch (e) {}
+	}
+	raceResults[raceKey] = Array.from(selectedRaceEvents);
+	const updated = { ...player, race_results: JSON.stringify(raceResults) };
+	if (window.dataSdk) {
+	await window.dataSdk.update(updated);
+	}
+	}
+	
+
+	autoMarkCellsForAllPlayers();
+	resultsSubmitted = true;
+	renderRaceEventsList();
+	renderRaceScores();
+	renderOtherPlayersCards();
+	
+
+	document.getElementById('notify-message').textContent = `✅ Risultati applicati! ${selectedRaceEvents.size} eventi selezionati.`;
+	document.getElementById('notify-modal').classList.remove('hidden');
+	});
+	
+
+	async function autoMarkCellsForAllPlayers() {
+	for (const player of allPlayers) {
+	const raceKey = `race_${currentRace}`;
+	const raceData = player[raceKey];
+	if (!raceData) continue;
+	try {
+	const parsed = JSON.parse(raceData);
+	const playerEvents = parsed.events || [];
+	const currentMarked = new Set(parsed.marked_indices || []);
+	selectedRaceEvents.forEach(selectedIdx => {
+	const selectedEvent = allEvents[selectedIdx];
+	playerEvents.forEach((event, idx) => {
+	if (event === selectedEvent) {
+	currentMarked.add(idx);
+	}
+	});
+	});
+	const points = calculatePoints(currentMarked);
+	const hasBingo = checkBingoStatus(currentMarked);
+	const updatedRaceData = JSON.stringify({
+	points: points,
+	bingo: hasBingo,
+	events: playerEvents,
+	marked_indices: Array.from(currentMarked)
+	});
+	const updated = { ...player, [raceKey]: updatedRaceData };
+	if (window.dataSdk) {
+	await window.dataSdk.update(updated);
+	}
+	} catch (e) {}
+	}
+	}
+	
+
+	document.getElementById('add-player-btn').addEventListener('click', async () => {
+	const input = document.getElementById('new-player-name');
+	const name = input.value.trim();
+	if (!name) {
+	document.getElementById('notify-message').textContent = 'Inserisci un nome!';
+	document.getElementById('notify-modal').classList.remove('hidden');
+	return;
+	}
+	if (window.dataSdk) {
+	const result = await window.dataSdk.create({
+	player_name: name,
+	total_points: 0,
+	races_played: 0,
+	race_locks: JSON.stringify({}),
+	race_results: JSON.stringify({})
+	});
+	if (result.isOk) {
+	input.value = '';
+	}
+	}
+	});
+	
+
+	function deletePlayer(backendId) {
+	playerToDelete = allPlayers.find(p => p.__backendId === backendId);
+	if (!playerToDelete) return;
+	document.getElementById('delete-modal').classList.remove('hidden');
+	}
+	
+
+	document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+	if (!playerToDelete) return;
+	if (window.dataSdk) {
+	await window.dataSdk.delete(playerToDelete);
+	if (currentPlayer && currentPlayer.__backendId === playerToDelete.__backendId) {
+	currentPlayer = null;
+	document.getElementById('player-selector').value = '';
+	updateStartButton();
+	}
+	}
+	document.getElementById('delete-modal').classList.add('hidden');
+	playerToDelete = null;
+	});
+	
+
+	document.getElementById('cancel-delete-btn').addEventListener('click', () => {
+	document.getElementById('delete-modal').classList.add('hidden');
+	playerToDelete = null;
+	});
+	
+
+	document.getElementById('reset-season-btn').addEventListener('click', () => {
+	document.getElementById('reset-modal').classList.remove('hidden');
+	});
+	
+
+	document.getElementById('confirm-reset-btn').addEventListener('click', async () => {
+	if (window.dataSdk) {
+	for (const player of [...allPlayers]) {
+	await window.dataSdk.delete(player);
+	}
+	}
+	currentPlayer = null;
+	document.getElementById('reset-modal').classList.add('hidden');
+	});
+	
+
+	document.getElementById('cancel-reset-btn').addEventListener('click', () => {
+	document.getElementById('reset-modal').classList.add('hidden');
+	});
+	
+
+	document.getElementById('close-bingo-btn').addEventListener('click', () => {
+	document.getElementById('bingo-modal').classList.add('hidden');
+	});
+	
+
+	document.getElementById('close-notify-btn').addEventListener('click', () => {
+	document.getElementById('notify-modal').classList.add('hidden');
+	});
+	
+
+	document.getElementById('toggle-lock-btn').addEventListener('click', () => {
+	document.getElementById('lock-modal').classList.remove('hidden');
+	});
+	
+
+	document.getElementById('confirm-lock-btn').addEventListener('click', async () => {
+	document.getElementById('lock-modal').classList.add('hidden');
+	isRaceLocked = true;
+	updateLockStatus();
+	if (!currentPlayer || !currentRace) return;
+	let locks = {};
+	if (currentPlayer.race_locks) {
+	try {
+	locks = JSON.parse(currentPlayer.race_locks);
+	} catch (e) {}
+	}
+	locks[`race_${currentRace}`] = true;
+	
+
+	let totalPoints = 0;
+	const raceKey = `race_${currentRace}`;
+	const raceData = currentPlayer[raceKey];
+	if (raceData) {
+	try {
+	const parsed = JSON.parse(raceData);
+	totalPoints += parsed.points || 0;
+	} catch (e) {}
+	}
+	for (let r = 1; r <= 24; r++) {
+	const otherRaceKey = `race_${r}`;
+	if (r !== currentRace && currentPlayer[otherRaceKey]) {
+	try {
+	const parsed = JSON.parse(currentPlayer[otherRaceKey]);
+	totalPoints += parsed.points || 0;
+	} catch (e) {}
+	}
+	}
+	
+
+	const updated = { ...currentPlayer, race_locks: JSON.stringify(locks), total_points: totalPoints };
+	if (window.dataSdk) {
+	await window.dataSdk.update(updated);
+	currentPlayer = updated;
+	}
+	renderLockStatus();
+	renderOtherPlayersCards();
+	});
+	
+
+	document.getElementById('cancel-lock-btn').addEventListener('click', () => {
+	document.getElementById('lock-modal').classList.add('hidden');
+	});
+	
+
+	document.getElementById('toggle-unlock-btn').addEventListener('click', async () => {
+	isRaceLocked = false;
+	updateLockStatus();
+	if (!currentPlayer || !currentRace) return;
+	let locks = {};
+	if (currentPlayer.race_locks) {
+	try {
+	locks = JSON.parse(currentPlayer.race_locks);
+	} catch (e) {}
+	}
+	locks[`race_${currentRace}`] = false;
+	const updated = { ...currentPlayer, race_locks: JSON.stringify(locks) };
+	if (window.dataSdk) {
+	await window.dataSdk.update(updated);
+	currentPlayer = updated;
+	}
+	renderLockStatus();
+	renderOtherPlayersCards();
+	});
+	
+
+	document.getElementById('new-game-btn').addEventListener('click', () => {
+	document.getElementById('game-container').classList.add('hidden');
+	selectedIndices.clear();
+	centerCellIndex = null;
+	currentCategory = Object.keys(eventCategories)[0];
+	renderCategoryTabs();
+	renderEventsList();
+	updatePreview();
+	document.getElementById('modal').classList.remove('hidden');
+	});
+	
+
+	document.getElementById('play-btn').addEventListener('click', () => {
+	selectedEvents = [];
+	for (let i = 0; i < allEvents.length; i++) {
+	if (selectedIndices.has(i)) selectedEvents.push(allEvents[i]);
+	}
+	if (centerCellIndex !== null) selectedEvents.splice(12, 0, centerCellEvents[centerCellIndex]);
+	selectedEvents = selectedEvents.slice(0, 25);
+	markedCells.clear();
+	bingoAchieved = false;
+	isRaceLocked = checkRaceLocked(currentPlayer);
+	document.getElementById('race-title').textContent = raceNames[currentRace - 1];
+	document.getElementById('player-display').textContent = `PLAYER: ${currentPlayer.player_name}`;
+	renderBingoCard();
+	renderOtherPlayersCards();
+	updateLockStatus();
+	document.getElementById('center-modal').classList.add('hidden');
+	document.getElementById('game-container').classList.remove('hidden');
+	saveGameData();
+	});
+	
+
+	document.getElementById('start-btn').addEventListener('click', () => {
+	if (!currentPlayer) return;
+	const raceKey = `race_${currentRace}`;
+	if (currentPlayer[raceKey]) {
+	try {
+	const parsed = JSON.parse(currentPlayer[raceKey]);
+	selectedEvents = parsed.events || [];
+	markedCells = new Set(parsed.marked_indices || []);
+	bingoAchieved = parsed.bingo || false;
+	isRaceLocked = checkRaceLocked(currentPlayer);
+	document.getElementById('race-title').textContent = raceNames[currentRace - 1];
+	document.getElementById('player-display').textContent = `PLAYER: ${currentPlayer.player_name}`;
+	document.getElementById('modal').classList.add('hidden');
+	document.getElementById('center-modal').classList.add('hidden');
+	document.getElementById('game-container').classList.remove('hidden');
+	renderBingoCard();
+	renderOtherPlayersCards();
+	updateLockStatus();
+	loadRaceEvents();
+	return;
+	} catch (e) {}
+	}
+	selectedIndices.clear();
+	centerCellIndex = null;
+	currentCategory = Object.keys(eventCategories)[0];
+	renderCategoryTabs();
+	renderEventsList();
+	updatePreview();
+	document.getElementById('game-container').classList.add('hidden');
+	document.getElementById('modal').classList.remove('hidden');
+	document.getElementById('center-modal').classList.add('hidden');
+	});
+	
+
+	function selectPlayer(backendId) {
+	const player = allPlayers.find(p => p.__backendId === backendId);
+	if (!player || !currentRace) return;
+	
+
+	currentPlayer = player;
+	document.getElementById('player-selector').value = backendId;
+	updateStartButton();
+	
+
+	const raceKey = `race_${currentRace}`;
+	
+
+	if (currentPlayer[raceKey]) {
+	try {
+	const parsed = JSON.parse(currentPlayer[raceKey]);
+	selectedEvents = parsed.events || [];
+	markedCells = new Set(parsed.marked_indices || []);
+	bingoAchieved = parsed.bingo || false;
+	isRaceLocked = checkRaceLocked(currentPlayer);
+	
+
+	document.getElementById('race-title').textContent = raceNames[currentRace - 1];
+	document.getElementById('player-display').textContent = `PLAYER: ${currentPlayer.player_name}`;
+	document.getElementById('game-container').classList.remove('hidden');
+	document.getElementById('modal').classList.add('hidden');
+	document.getElementById('center-modal').classList.add('hidden');
+	
+
+	renderBingoCard();
+	renderOtherPlayersCards();
+	updateLockStatus();
+	loadRaceEvents();
+	renderLeaderboard();
+	return;
+	} catch (e) {
+	console.error('Errore caricamento:', e);
+	}
+	}
+	
+
+	selectedIndices.clear();
+	centerCellIndex = null;
+	currentCategory = Object.keys(eventCategories)[0];
+	renderCategoryTabs();
+	renderEventsList();
+	updatePreview();
+	
+
+	document.getElementById('game-container').classList.add('hidden');
+	document.getElementById('center-modal').classList.add('hidden');
+	document.getElementById('modal').classList.remove('hidden');
+	renderLeaderboard();
+	}
+	
+
+	initDataSDK();
+	initRaceSelector();
+	</script>
+	<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cf0740fa43dbab5',t:'MTc3MTI4MDY0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+	</html>
