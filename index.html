@@ -1549,6 +1549,7 @@ function selectPlayer(playerId) {
 </script>
   
 <!-- ADMIN BAR (solo per setup, poi puoi lasciarla) -->
+  
 <div id="adminBar" style="position:fixed;bottom:12px;right:12px;z-index:9999;display:flex;gap:8px;">
   <button id="btnAdminLogin" style="padding:10px 12px;border-radius:10px;background:#E10600;color:#fff;font-weight:700;border:none;cursor:pointer;">
     Admin login (Google)
@@ -1560,7 +1561,15 @@ function selectPlayer(playerId) {
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    getAuth, signInAnonymously, GoogleAuthProvider,
+    signInWithPopup, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    getFirestore, collection, doc, addDoc, setDoc,
+    deleteDoc, onSnapshot, getDocs, writeBatch,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCGHO2YKuHU93uMSdAJ4cHUPCOfPADiLoQ",
@@ -1571,27 +1580,73 @@ function selectPlayer(playerId) {
     appId: "1:373058712857:web:f7e41be2d61d8dac204188"
   };
 
+  const ROOM_ID = "main";
+  const ADMIN_UID = "EmAepLkomSdROGofWbA6xKqu4jB2";
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
-  // login anonimo automatico per tutti
+  const roomDoc = doc(db, "rooms", ROOM_ID);
+  const playersCol = collection(db, "rooms", ROOM_ID, "players");
+
+  window._authState = { uid: null, isAdmin: false };
+
+  window.Fire = {
+    onPlayers(cb) {
+      return onSnapshot(playersCol, snap => {
+        const players = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        cb(players);
+      });
+    },
+    async addPlayer(name) {
+      const uid = window._authState.uid;
+      return addDoc(playersCol, {
+        ownerUid: uid,
+        player_name: name,
+        total_points: 0,
+        race_locks: {},
+        race_results: {},
+        races: {},
+        createdAt: serverTimestamp()
+      });
+    },
+    async setPlayer(id, data) {
+      return setDoc(doc(db,"rooms",ROOM_ID,"players",id), data, { merge:true });
+    },
+    async deletePlayer(id) {
+      return deleteDoc(doc(db,"rooms",ROOM_ID,"players",id));
+    },
+    async resetAllPlayers() {
+      const snap = await getDocs(playersCol);
+      const batch = writeBatch(db);
+      snap.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+  };
+
   await signInAnonymously(auth);
 
   const btnLogin = document.getElementById("btnAdminLogin");
-  const btnUid = document.getElementById("btnShowUid");
+  const btnUid   = document.getElementById("btnShowUid");
 
   btnLogin.onclick = async () => {
-    console.log("Provo login Google…");
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };
 
-  onAuthStateChanged(auth, (user) => {
-    btnUid.textContent = "UID: " + (user?.uid || "—");
-    console.log("ADMIN UID (copia questo):", user?.uid);
+  onAuthStateChanged(auth, user => {
+    const uid = user?.uid || null;
+    const isAdmin = uid === ADMIN_UID;
+
+    window._authState.uid = uid;
+    window._authState.isAdmin = isAdmin;
+
+    btnUid.textContent = "UID: " + (uid || "—");
+    console.log("UID:", uid, "Admin:", isAdmin);
   });
-  
 </script>
+
 
 <!-- SCRIPT NORMALE PER UI -->
 <script>
@@ -1606,6 +1661,7 @@ function selectPlayer(playerId) {
   
 </body>
 </html>
+
 
 
 
