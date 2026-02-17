@@ -1595,15 +1595,18 @@ function selectPlayer(playerId) {
 
 <!-- SCRIPT NORMALE PER UI -->
 <script>
-
-  document.getElementById('close-events-modal').addEventListener('click', () => {
-    document.getElementById('modal').classList.add('hidden');
-  });
-  
+  const closeBtn = document.getElementById('close-events-modal');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      const modal = document.getElementById('modal');
+      if (modal) modal.classList.add('hidden');
+    });
+  }
 </script>
   
 </body>
 </html>
+
 
 
 
