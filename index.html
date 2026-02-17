@@ -230,10 +230,14 @@ function loadState() {
     return defaultState();
   }
 }
-
 function saveState() {
+  // Se Firestore è pronto, NON salvare local
+  if (window.Fire && window._authState?.uid) return;
+
+  // fallback (se Firestore non è pronto)
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
 }
+
 
 function notify(msg) {
   document.getElementById('notify-message').textContent = msg;
@@ -554,13 +558,20 @@ function getRaceData(player, raceNumber) {
   return player.races[key] || null;
 }
 
-function setRaceData(player, raceNumber, data) {
+async function setRaceData(player, raceNumber, data) {
   ensurePlayerDefaults(player);
   const key = `race_${raceNumber}`;
   player.races[key] = data;
   recomputeTotalPointsForPlayer(player);
-  saveState();
+
+  // FIRESTORE
+  if (isFireReady()) {
+    await pushPlayerToFirestore(player);
+  } else {
+    saveState();
+  }
 }
+
 
 function isLockedFor(player, raceNumber) {
   ensurePlayerDefaults(player);
@@ -570,8 +581,11 @@ function isLockedFor(player, raceNumber) {
 function setLockFor(player, raceNumber, locked) {
   ensurePlayerDefaults(player);
   player.race_locks[`race_${raceNumber}`] = !!locked;
-  saveState();
+
+  if (isFireReady()) pushPlayerToFirestore(player).catch(console.error);
+  else saveState();
 }
+
 
 /* =========================
    UI RENDER
@@ -1227,18 +1241,21 @@ function renderRaceEventsList() {
 }
 
 document.getElementById('submit-results-btn').addEventListener('click', () => {
-  if (!currentRace) return;
-  if (selectedRaceEvents.size === 0) {
-    notify('Seleziona almeno un evento!');
-    return;
-  }
+if (isFireReady()) {
+  if (!window._authState.isAdmin) { notify('❌ Solo admin'); return; }
 
-  const rk = `race_results_${currentRace}`;
+  for (const p of appState.players) {
+    ensurePlayerDefaults(p);
+    p.race_results[rk] = Array.from(selectedRaceEvents);
+    await pushPlayerToFirestore(p);
+  }
+} else {
   appState.players.forEach(p => {
     ensurePlayerDefaults(p);
     p.race_results[rk] = Array.from(selectedRaceEvents);
   });
   saveState();
+}
 
   autoMarkCellsForAllPlayers();
   resultsSubmitted = true;
@@ -1286,27 +1303,41 @@ function autoMarkCellsForAllPlayers() {
 /* =========================
    ADD / DELETE / RESET
    ========================= */
-document.getElementById('add-player-btn').addEventListener('click', () => {
+document.getElementById('add-player-btn').addEventListener('click', async () => {
   const input = document.getElementById('new-player-name');
   const name = input.value.trim();
   if (!name) { notify('Inserisci un nome!'); return; }
 
-  const player = {
-    id: uid(),
-    player_name: name,
-    total_points: 0,
-    race_locks: {},
-    race_results: {},
-    races: {}
-  };
+  try {
+    if (isFireReady()) {
+      await Fire.addPlayer(name);
+      input.value = '';
+      notify('✅ Giocatore aggiunto (Firestore)!');
+      return; // STEP 2 aggiornerà la UI via onPlayers
+    }
 
-  appState.players.push(player);
-  saveState();
-  input.value = '';
-  renderLeaderboard();
-  updatePlayerSelector();
-  notify('✅ Giocatore aggiunto!');
+    // fallback local
+    const player = {
+      id: uid(),
+      ownerUid: null,
+      player_name: name,
+      total_points: 0,
+      race_locks: {},
+      race_results: {},
+      races: {}
+    };
+    appState.players.push(player);
+    saveState();
+    input.value = '';
+    renderLeaderboard();
+    updatePlayerSelector();
+    notify('✅ Giocatore aggiunto (local)!');
+  } catch (e) {
+    console.error(e);
+    notify('❌ Errore aggiunta giocatore');
+  }
 });
+
 
 function deletePlayer(id) {
   playerToDelete = getPlayerById(id);
@@ -1314,28 +1345,38 @@ function deletePlayer(id) {
   document.getElementById('delete-modal').classList.remove('hidden');
 }
 
-document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
   if (!playerToDelete) return;
-  const deletingId = playerToDelete.id;
 
-  deletePlayerById(deletingId);
+  try {
+    if (isFireReady()) {
+      // sicurezza: solo admin o owner
+      if (!requireAdminOrOwner(playerToDelete)) {
+        notify('❌ Non puoi eliminare questo giocatore');
+        return;
+      }
+      await Fire.deletePlayer(playerToDelete.id);
+      document.getElementById('delete-modal').classList.add('hidden');
+      playerToDelete = null;
+      notify('✅ Giocatore eliminato (Firestore)!');
+      return; // STEP 2 riallinea la UI
+    }
 
-  if (currentPlayer && currentPlayer.id === deletingId) {
-    currentPlayer = null;
-    document.getElementById('player-selector').value = '';
-    updateStartButton();
-    document.getElementById('game-container').classList.add('hidden');
+    // fallback local
+    deletePlayerById(playerToDelete.id);
+    document.getElementById('delete-modal').classList.add('hidden');
+    playerToDelete = null;
+    renderLeaderboard();
+    updatePlayerSelector();
+    renderRaceScores();
+    renderLockStatus();
+    renderOtherPlayersCards();
+  } catch (e) {
+    console.error(e);
+    notify('❌ Errore eliminazione');
   }
-
-  document.getElementById('delete-modal').classList.add('hidden');
-  playerToDelete = null;
-
-  renderLeaderboard();
-  updatePlayerSelector();
-  renderRaceScores();
-  renderLockStatus();
-  renderOtherPlayersCards();
 });
+
 
 document.getElementById('cancel-delete-btn').addEventListener('click', () => {
   document.getElementById('delete-modal').classList.add('hidden');
@@ -1346,17 +1387,33 @@ document.getElementById('reset-season-btn').addEventListener('click', () => {
   document.getElementById('reset-modal').classList.remove('hidden');
 });
 
-document.getElementById('confirm-reset-btn').addEventListener('click', () => {
-  appState = defaultState();
-  saveState();
-  currentPlayer = null;
-  currentRace = null;
-  selectedIndices.clear();
-  centerCellIndex = null;
-  selectedEvents = [];
-  markedCells = new Set();
-  bingoAchieved = false;
-  isRaceLocked = false;
+document.getElementById('confirm-reset-btn').addEventListener('click', async () => {
+  try {
+    if (isFireReady()) {
+      if (!window._authState.isAdmin) {
+        notify('❌ Solo admin può fare reset');
+        return;
+      }
+      await Fire.resetAllPlayers();
+      document.getElementById('reset-modal').classList.add('hidden');
+      notify('✅ Reset (Firestore) completato!');
+      return; // STEP 2 aggiorna
+    }
+
+    // fallback local
+    appState = defaultState();
+    saveState();
+    // ...qui puoi lasciare il tuo reset UI attuale...
+    document.getElementById('reset-modal').classList.add('hidden');
+    renderLeaderboard();
+    updatePlayerSelector();
+    updateStartButton();
+    notify('✅ Stagione resettata (local)!');
+  } catch (e) {
+    console.error(e);
+    notify('❌ Errore reset');
+  }
+});
 
   document.getElementById('race-selector').value = '';
   document.getElementById('player-selector').value = '';
@@ -1531,7 +1588,7 @@ function selectPlayer(playerId) {
 /* =========================
    INIT
    ========================= */
-(function init() {
+function init() {
   // ensure defaults & totals
   appState.players.forEach(p => {
     ensurePlayerDefaults(p);
@@ -1545,8 +1602,33 @@ function selectPlayer(playerId) {
   updateStartButton();
 
   currentCategory = Object.keys(eventCategories)[0];
-})();
-</script>
+}
+
+// avvia in locale, poi Firestore lo “sovrascrive” quando arriva
+init();
+
+// quando Firestore è pronto, attiva sync
+window.addEventListener("fire-ready", () => {
+  if (!window.Fire) return;
+
+  Fire.onPlayers(playersFromDb => {
+    appState.players = playersFromDb.map(p => ({
+      id: p.id,
+      player_name: p.player_name,
+      total_points: p.total_points || 0,
+      race_locks: p.race_locks || {},
+      race_results: p.race_results || {},
+      races: p.races || {}
+    }));
+
+    renderLeaderboard();
+    updatePlayerSelector();
+    renderRaceScores();
+    renderLockStatus();
+    renderOtherPlayersCards();
+  });
+});
+
   
 <!-- ADMIN BAR (solo per setup, poi puoi lasciarla) -->
   
@@ -1624,6 +1706,7 @@ function selectPlayer(playerId) {
       await batch.commit();
     }
   };
+  window.dispatchEvent(new Event("fire-ready"));
 
   await signInAnonymously(auth);
 
@@ -1661,6 +1744,7 @@ function selectPlayer(playerId) {
   
 </body>
 </html>
+
 
 
 
