@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>F1 Bingo 2026</title>
+  <title>FORMULA 1 Bingo 2026</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -148,7 +148,7 @@
     <!-- CENTER: MAIN GAME -->
     <main class="flex-1">
       <div class="text-center mb-8">
-        <h1 class="font-orbitron text-5xl font-black text-white mb-2" style="color:#E10600;">F1 BINGO 2026</h1>
+        <h1 class="font-orbitron text-5xl font-black text-white mb-2" style="color:#E10600;">FORMULA 1 BINGO 2026</h1>
       </div>
 
       <div id="game-container" class="hidden w-full">
@@ -905,15 +905,6 @@ function updatePreview() {
   nextBtn.style.cursor = selectedIndices.size === 24 ? 'pointer' : 'not-allowed';
 }
 
-document.getElementById('random-btn').addEventListener('click', () => {
-  selectedIndices.clear();
-  const validIndices = Array.from({length: allEvents.length}, (_, i) => i);
-  validIndices.sort(() => Math.random() - 0.5).slice(0, 24).forEach(i => selectedIndices.add(i));
-  currentCategory = Object.keys(eventCategories)[0];
-  renderCategoryTabs();
-  renderEventsList();
-  updatePreview();
-});
 
 function renderCenterEventsList() {
   const container = document.getElementById('center-events-container');
@@ -1601,13 +1592,18 @@ function selectPlayer(playerId) {
   });
   
 </script>
+
+<!-- SCRIPT NORMALE PER UI -->
+<script>
+
+  document.getElementById('close-events-modal').addEventListener('click', () => {
+    document.getElementById('modal').classList.add('hidden');
+  });
   
 </script>
-document.getElementById('close-events-modal').addEventListener('click', () => {
-  document.getElementById('modal').classList.add('hidden');
-});
-</script>
+  
 </body>
 </html>
+
 
 
