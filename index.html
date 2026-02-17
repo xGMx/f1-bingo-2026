@@ -72,7 +72,12 @@
 
   <!-- EVENT SELECTION MODAL -->
   <div id="modal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 overflow-auto">
-    <div class="bg-gray-900 rounded-lg p-6 max-w-5xl w-full" style="background:#16213e;border:2px solid #E10600;">
+    <div class="relative bg-gray-900 rounded-lg p-6 max-w-5xl w-full" style="background:#16123e;border:2px solid #E10600;">
+      <button id="close-events-modal"
+  class="absolute top-4 right-4 text-white font-bold text-2xl px-3 py-1 rounded hover:scale-110 transition-all"
+  style="background:#2d3748;border:2px solid #444;">
+  ×
+</button>
       <h2 class="font-orbitron text-3xl font-bold text-white mb-4">Scegli 24 Eventi</h2>
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
         <div class="lg:col-span-3">
@@ -424,6 +429,19 @@ const eventCategories = {
 };
 
 const allEvents = Object.values(eventCategories).flat();
+const singlePickCategories = new Set([
+  "Vincita di una Vettura",
+  "La gara finisce con…",
+  "Driver of the Day…"
+]);
+
+function getCategoryOfEventIndex(globalIndex) {
+  const ev = allEvents[globalIndex];
+  for (const [cat, arr] of Object.entries(eventCategories)) {
+    if (arr.includes(ev)) return cat;
+  }
+  return null;
+}
 
 const centerCellEvents = [
   "Vittoria di Gasly",
@@ -800,11 +818,83 @@ function renderEventsList() {
 }
 
 function toggleEvent(index) {
-  if (selectedIndices.has(index)) selectedIndices.delete(index);
-  else if (selectedIndices.size < 24) selectedIndices.add(index);
+
+  const cat = getCategoryOfEventIndex(index);
+
+  // 👉 se appartiene a categoria con vincolo 1 sola scelta
+  if (cat && singlePickCategories.has(cat) && !selectedIndices.has(index)) {
+
+    // rimuove eventuale selezione già presente nella stessa categoria
+    for (const i of Array.from(selectedIndices)) {
+      if (getCategoryOfEventIndex(i) === cat) {
+        selectedIndices.delete(i);
+      }
+    }
+  }
+
+  // toggle normale
+  if (selectedIndices.has(index)) {
+    selectedIndices.delete(index);
+  } 
+  else if (selectedIndices.size < 24) {
+    selectedIndices.add(index);
+  }
+
   renderEventsList();
   updatePreview();
+  
 }
+// ===== RANDOM (Casuale) con vincolo 1 sola scelta =====
+document.getElementById('random-btn').addEventListener('click', () => {
+
+  selectedIndices.clear();
+
+  // 1️⃣ 1 evento per ciascuna categoria vincolata
+  for (const cat of singlePickCategories) {
+
+    const arr = eventCategories[cat] || [];
+    if (!arr.length) continue;
+
+    const pick = arr[Math.floor(Math.random() * arr.length)];
+    const globalIndex = allEvents.indexOf(pick);
+
+    if (globalIndex !== -1) {
+      selectedIndices.add(globalIndex);
+    }
+  }
+
+  // 2️⃣ completo fino a 24 evitando doppioni nelle categorie vincolate
+  const allIdx = Array.from({ length: allEvents.length }, (_, i) => i);
+  allIdx.sort(() => Math.random() - 0.5);
+
+  for (const idx of allIdx) {
+
+    if (selectedIndices.size >= 24) break;
+    if (selectedIndices.has(idx)) continue;
+
+    const cat = getCategoryOfEventIndex(idx);
+
+// 👉 se categoria vincolata, controlla se ne ho già uno
+if (cat && singlePickCategories.has(cat)) {
+
+  let already = false;
+
+  for (const i of selectedIndices) {
+    if (getCategoryOfEventIndex(i) === cat) {
+      already = true;
+      break;
+    }
+  }
+
+  if (already) continue;
+}
+
+selectedIndices.add(idx);
+  }
+
+  renderEventsList();
+  updatePreview();
+});
 
 function updatePreview() {
   const counter = document.getElementById('counter');
@@ -1509,8 +1599,15 @@ function selectPlayer(playerId) {
     btnUid.textContent = "UID: " + (user?.uid || "—");
     console.log("ADMIN UID (copia questo):", user?.uid);
   });
+  
 </script>
-
+  
+</script>
+document.getElementById('close-events-modal').addEventListener('click', () => {
+  document.getElementById('modal').classList.add('hidden');
+});
+</script>
 </body>
 </html>
+
 
