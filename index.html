@@ -237,6 +237,21 @@ function saveState() {
   // fallback (se Firestore non è pronto)
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
 }
+function isFireReady() {
+  return !!(window.Fire && window._authState && window._authState.uid);
+}
+
+function requireAdminOrOwner(player) {
+  const uid = window._authState?.uid;
+  const isAdmin = !!window._authState?.isAdmin;
+  return isAdmin || (player && player.ownerUid && player.ownerUid === uid);
+}
+
+async function pushPlayerToFirestore(player) {
+  if (!isFireReady()) return;
+  if (!player?.id) return;
+  await window.Fire.setPlayer(player.id, player);
+}
 
 
 function notify(msg) {
@@ -1129,12 +1144,18 @@ function renderOtherPlayersCards() {
             bingo: checkBingoStatus(markedSet)
           };
           player.races[raceKey] = updated;
-          recomputeTotalPointsForPlayer(player);
-          saveState();
+recomputeTotalPointsForPlayer(player);
 
-          renderRaceScores();
-          renderLeaderboard();
-          renderOtherPlayersCards();
+if (isFireReady()) {
+  pushPlayerToFirestore(player);
+} else {
+  saveState();
+}
+
+renderRaceScores();
+renderLeaderboard();
+renderOtherPlayersCards();
+
         });
       }
 
@@ -1240,22 +1261,39 @@ function renderRaceEventsList() {
   });
 }
 
-document.getElementById('submit-results-btn').addEventListener('click', () => {
-if (isFireReady()) {
-  if (!window._authState.isAdmin) { notify('❌ Solo admin'); return; }
+document.getElementById('submit-results-btn').addEventListener('click', async () => {
+  if (!currentRace) return;
+  if (selectedRaceEvents.size === 0) { notify('Seleziona almeno un evento!'); return; }
 
-  for (const p of appState.players) {
-    ensurePlayerDefaults(p);
-    p.race_results[rk] = Array.from(selectedRaceEvents);
-    await pushPlayerToFirestore(p);
+  const rk = `race_results_${currentRace}`;
+
+  if (isFireReady()) {
+    if (!window._authState.isAdmin) { notify('❌ Solo admin'); return; }
+
+    for (const p of appState.players) {
+      ensurePlayerDefaults(p);
+      p.race_results[rk] = Array.from(selectedRaceEvents);
+      await pushPlayerToFirestore(p);
+    }
+  } else {
+    appState.players.forEach(p => {
+      ensurePlayerDefaults(p);
+      p.race_results[rk] = Array.from(selectedRaceEvents);
+    });
+    saveState();
   }
-} else {
-  appState.players.forEach(p => {
-    ensurePlayerDefaults(p);
-    p.race_results[rk] = Array.from(selectedRaceEvents);
-  });
-  saveState();
-}
+
+  autoMarkCellsForAllPlayers();
+  resultsSubmitted = true;
+
+  renderRaceEventsList();
+  renderRaceScores();
+  renderOtherPlayersCards();
+  renderLeaderboard();
+
+  notify(`✅ Risultati applicati! ${selectedRaceEvents.size} eventi selezionati.`);
+});
+
 
   autoMarkCellsForAllPlayers();
   resultsSubmitted = true;
@@ -1415,20 +1453,27 @@ document.getElementById('confirm-reset-btn').addEventListener('click', async () 
   }
 });
 
-  document.getElementById('race-selector').value = '';
-  document.getElementById('player-selector').value = '';
-  document.getElementById('player-selector').disabled = true;
-  document.getElementById('race-scores-container').style.display = 'none';
-  document.getElementById('lock-status-container').style.display = 'none';
-  document.getElementById('race-events-container').style.display = 'none';
-  document.getElementById('game-container').classList.add('hidden');
+// fallback local
+appState = defaultState();
+saveState();
+currentPlayer = null;
+currentRace = null;
 
-  document.getElementById('reset-modal').classList.add('hidden');
+document.getElementById('race-selector').value = '';
+document.getElementById('player-selector').value = '';
+document.getElementById('player-selector').disabled = true;
+document.getElementById('race-scores-container').style.display = 'none';
+document.getElementById('lock-status-container').style.display = 'none';
+document.getElementById('race-events-container').style.display = 'none';
+document.getElementById('game-container').classList.add('hidden');
 
-  renderLeaderboard();
-  updatePlayerSelector();
-  updateStartButton();
-  notify('✅ Stagione resettata!');
+document.getElementById('reset-modal').classList.add('hidden');
+
+renderLeaderboard();
+updatePlayerSelector();
+updateStartButton();
+notify('✅ Stagione resettata (local)!');
+
 });
 
 document.getElementById('cancel-reset-btn').addEventListener('click', () => {
@@ -1628,7 +1673,8 @@ window.addEventListener("fire-ready", () => {
     renderOtherPlayersCards();
   });
 });
-
+  
+</script>
   
 <!-- ADMIN BAR (solo per setup, poi puoi lasciarla) -->
   
@@ -1706,9 +1752,11 @@ window.addEventListener("fire-ready", () => {
       await batch.commit();
     }
   };
+  
+  await signInAnonymously(auth);
   window.dispatchEvent(new Event("fire-ready"));
 
-  await signInAnonymously(auth);
+
 
   const btnLogin = document.getElementById("btnAdminLogin");
   const btnUid   = document.getElementById("btnShowUid");
@@ -1744,6 +1792,7 @@ window.addEventListener("fire-ready", () => {
   
 </body>
 </html>
+
 
 
 
