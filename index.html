@@ -1071,14 +1071,13 @@ function renderRaceEventsList() {
     container.appendChild(el);
   });
 }
-
-function autoMarkCellsForAllPlayers() {
+async function autoMarkCellsForAllPlayers() {
   if (!currentRace) return;
   const raceKey = `race_${currentRace}`;
 
-  appState.players.forEach(player => {
+  for (const player of appState.players) {
     const raceData = player.races?.[raceKey];
-    if (!raceData || !Array.isArray(raceData.events)) return;
+    if (!raceData || !Array.isArray(raceData.events)) continue;
 
     const playerEvents = raceData.events;
     const currentMarked = new Set(raceData.marked_indices || []);
@@ -1090,43 +1089,29 @@ function autoMarkCellsForAllPlayers() {
       });
     });
 
-   const markedSet = new Set([...currentMarked]);
-player.races[raceKey] = {
-  ...raceData,
-  marked_indices: [...currentMarked],
-  points: calculatePoints(markedSet),
-  bingo: checkBingoStatus(markedSet)
-};
+    const markedSet = new Set([...currentMarked]);
+
+    player.races[raceKey] = {
+      ...raceData,
+      marked_indices: [...currentMarked],
+      points: calculatePoints(markedSet),
+      bingo: checkBingoStatus(markedSet)
+    };
 
     recomputeTotalPointsForPlayer(player);
-  });
 
-  saveState();
-}
-
-document.getElementById('submit-results-btn').addEventListener('click', async () => {
-  if (!currentRace) return;
-  if (selectedRaceEvents.size === 0) { notify('Seleziona almeno un evento!'); return; }
-
-  const rk = `race_results_${currentRace}`;
-
-  if (isFireReady()) {
-    if (!window._authState.isAdmin) { notify('❌ Solo admin'); return; }
-
-    for (const p of appState.players) {
-      ensurePlayerDefaults(p);
-      p.race_results[rk] = Array.from(selectedRaceEvents);
-      await savePlayer(p);
+    // ✅ Se Firestore è attivo, persisti davvero
+    if (isFireReady()) {
+      await savePlayer(player);
     }
-  } else {
-    appState.players.forEach(p => {
-      ensurePlayerDefaults(p);
-      p.race_results[rk] = Array.from(selectedRaceEvents);
-    });
-    saveState();
   }
 
-  autoMarkCellsForAllPlayers();
+  // fallback local
+  if (!isFireReady()) saveState();
+}
+  }
+
+  await autoMarkCellsForAllPlayers();
   resultsSubmitted = true;
 
   renderRaceEventsList();
@@ -1559,4 +1544,5 @@ window.addEventListener("fire-ready", () => {
 
 </body>
 </html>
+
 
