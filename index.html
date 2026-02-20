@@ -202,7 +202,7 @@
   <!-- ADMIN BAR -->
   <div id="adminBar" style="position:fixed;bottom:12px;right:12px;z-index:9999;display:flex;gap:8px;">
     <button id="btnAdminLogin" style="padding:10px 12px;border-radius:10px;background:#E10600;color:#fff;font-weight:700;border:none;cursor:pointer;">
-      Admin login (Google)
+      Accedi con Google
     </button>
     <button id="btnShowUid" style="padding:10px 12px;border-radius:10px;background:#2d3748;color:#fff;font-weight:700;border:none;">
       UID: —
@@ -1467,10 +1467,10 @@ window.addEventListener("fire-ready", () => {
 <!-- FIREBASE MODULE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import {
-    getAuth, signInAnonymously, GoogleAuthProvider,
-    signInWithPopup, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import {
+  getAuth, GoogleAuthProvider,
+  signInWithPopup, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import {
     getFirestore, collection, doc, addDoc, setDoc,
     deleteDoc, onSnapshot, getDocs, writeBatch,
@@ -1505,6 +1505,56 @@ window.addEventListener("fire-ready", () => {
       });
     },
     async addPlayer(name) {
+    const uid = window._authState.uid;
+    return addDoc(playersCol, {
+      ownerUid: uid,
+      player_name: name,
+      total_points: 0,
+      race_locks: {},
+      race_results: {},
+      races: {},
+      createdAt: serverTimestamp()
+    });
+  },
+
+  async setPlayer(id, data) {
+    return setDoc(doc(db, "rooms", ROOM_ID, "players", id), data, { merge: true });
+  },
+
+  async deletePlayer(id) {
+    return deleteDoc(doc(db, "rooms", ROOM_ID, "players", id));
+  },
+
+  async resetAllPlayers() {
+    const snap = await getDocs(playersCol);
+    const batch = writeBatch(db);
+    snap.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  };
+    const btnLogin = document.getElementById("btnAdminLogin");
+const btnUid   = document.getElementById("btnShowUid");
+
+btnLogin.onclick = async () => {
+  const provider = new GoogleAuthProvider();
+  await signInWithPopup(auth, provider);
+};
+
+onAuthStateChanged(auth, user => {
+  const uid = user?.uid || null;
+  const isAdmin = uid === ADMIN_UID;
+
+  window._authState.uid = uid;
+  window._authState.isAdmin = isAdmin;
+
+  btnUid.textContent = "UID: " + (uid || "—");
+  btnLogin.textContent = uid ? "Google connesso ✅" : "Accedi con Google";
+
+  // 🔥 importantissimo: avvia Firestore solo dopo login
+  if (uid) {
+    window.dispatchEvent(new Event("fire-ready"));
+  }
+});
+    async addPlayer(name) {
       const uid = window._authState.uid;
       return addDoc(playersCol, {
         ownerUid: uid,
@@ -1531,11 +1581,7 @@ window.addEventListener("fire-ready", () => {
   };
 
   // ✅ setto subito UID dopo anonymous (così isFireReady diventa vero prima)
-  const cred = await signInAnonymously(auth);
-  window._authState.uid = cred.user.uid;
-  window._authState.isAdmin = cred.user.uid === ADMIN_UID;
 
-  window.dispatchEvent(new Event("fire-ready"));
 
   const btnLogin = document.getElementById("btnAdminLogin");
   const btnUid   = document.getElementById("btnShowUid");
@@ -1568,6 +1614,7 @@ window.addEventListener("fire-ready", () => {
 
 </body>
 </html>
+
 
 
 
