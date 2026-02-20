@@ -1090,13 +1090,13 @@ function autoMarkCellsForAllPlayers() {
       });
     });
 
-    const markedSet = new Set([...currentMarked]);
-    player.races[raceKey] = {
-      ...raceData,
-      marked_indices: [...currentMarked],
-      points: calculatePoints(markedSet),
-      bingo: checkBingoStatus(markedSet)
-    };
+   const markedSet = new Set([...currentMarked]);
+player.races[raceKey] = {
+  ...raceData,
+  marked_indices: [...currentMarked],
+  points: calculatePoints(markedSet),
+  bingo: checkBingoStatus(markedSet)
+};
 
     recomputeTotalPointsForPlayer(player);
   });
@@ -1559,3 +1559,4 @@ window.addEventListener("fire-ready", () => {
 
 </body>
 </html>
+
