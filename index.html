@@ -1070,7 +1070,6 @@ function renderRaceEventsList() {
     el.appendChild(document.createTextNode(event));
     container.appendChild(el);
   });
-}
 async function autoMarkCellsForAllPlayers() {
   if (!currentRace) return;
   const raceKey = `race_${currentRace}`;
@@ -1100,18 +1099,39 @@ async function autoMarkCellsForAllPlayers() {
 
     recomputeTotalPointsForPlayer(player);
 
-    // ✅ Se Firestore è attivo, persisti davvero
     if (isFireReady()) {
-      await savePlayer(player);
+      await savePlayer(player); // ✅ salva su Firestore
     }
   }
 
-  // fallback local
-  if (!isFireReady()) saveState();
+  if (!isFireReady()) saveState(); // fallback local
 }
+
+document.getElementById('submit-results-btn').addEventListener('click', async () => {
+  if (!currentRace) return;
+  if (selectedRaceEvents.size === 0) { notify('Seleziona almeno un evento!'); return; }
+
+  const rk = `race_results_${currentRace}`;
+
+  if (isFireReady()) {
+    if (!window._authState.isAdmin) { notify('❌ Solo admin'); return; }
+
+    for (const p of appState.players) {
+      ensurePlayerDefaults(p);
+      p.race_results[rk] = Array.from(selectedRaceEvents);
+      await savePlayer(p);
+    }
+  } else {
+    appState.players.forEach(p => {
+      ensurePlayerDefaults(p);
+      p.race_results[rk] = Array.from(selectedRaceEvents);
+    });
+    saveState();
   }
 
+  // ✅ QUI va l'await (dentro il listener)
   await autoMarkCellsForAllPlayers();
+
   resultsSubmitted = true;
 
   renderRaceEventsList();
@@ -1120,6 +1140,7 @@ async function autoMarkCellsForAllPlayers() {
   renderLeaderboard();
   notify(`✅ Risultati applicati! ${selectedRaceEvents.size} eventi selezionati.`);
 });
+
 
 /* =========================
    ADD / DELETE / RESET
@@ -1544,5 +1565,6 @@ window.addEventListener("fire-ready", () => {
 
 </body>
 </html>
+
 
 
