@@ -1575,7 +1575,9 @@ window.addEventListener("fire-ready", () => {
     window._authState.uid = uid;
     window._authState.isAdmin = isAdmin;
 
-    if (btnUid) btnUid.textContent = "UID: " + (uid || "—");
+    if (btnUid) btnUid.textContent =
+  "UID: " + (uid || "—") +
+  (isAdmin ? " 👑 ADMIN" : " 👤 USER");
     if (btnLogin) btnLogin.textContent = uid ? "Google connesso ✅" : "Accedi con Google";
 
     if (uid) {
@@ -1597,6 +1599,7 @@ window.addEventListener("fire-ready", () => {
 
 </body>
 </html>
+
 
 
 
