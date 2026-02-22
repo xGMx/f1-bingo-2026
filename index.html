@@ -1464,16 +1464,26 @@ window.addEventListener("fire-ready", () => {
 });
 </script>
 
-<!-- FIREBASE MODULE -->
+<!-- FIREBASE MODULE (CORRETTO) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import {
-  getAuth, GoogleAuthProvider,
-  signInWithPopup, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import {
-    getFirestore, collection, doc, addDoc, setDoc,
-    deleteDoc, onSnapshot, getDocs, writeBatch,
+    getAuth,
+    signInAnonymously,
+    GoogleAuthProvider,
+    signInWithPopup,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    doc,
+    addDoc,
+    setDoc,
+    deleteDoc,
+    onSnapshot,
+    getDocs,
+    writeBatch,
     serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -1495,8 +1505,10 @@ import {
 
   const playersCol = collection(db, "rooms", ROOM_ID, "players");
 
+  // stato auth globale
   window._authState = { uid: null, isAdmin: false };
 
+  // API Firestore globale
   window.Fire = {
     onPlayers(cb) {
       return onSnapshot(playersCol, snap => {
@@ -1504,56 +1516,7 @@ import {
         cb(players);
       });
     },
-    async addPlayer(name) {
-    const uid = window._authState.uid;
-    return addDoc(playersCol, {
-      ownerUid: uid,
-      player_name: name,
-      total_points: 0,
-      race_locks: {},
-      race_results: {},
-      races: {},
-      createdAt: serverTimestamp()
-    });
-  },
 
-  async setPlayer(id, data) {
-    return setDoc(doc(db, "rooms", ROOM_ID, "players", id), data, { merge: true });
-  },
-
-  async deletePlayer(id) {
-    return deleteDoc(doc(db, "rooms", ROOM_ID, "players", id));
-  },
-
-  async resetAllPlayers() {
-    const snap = await getDocs(playersCol);
-    const batch = writeBatch(db);
-    snap.forEach(d => batch.delete(d.ref));
-    await batch.commit();
-  };
-    const btnLogin = document.getElementById("btnAdminLogin");
-const btnUid   = document.getElementById("btnShowUid");
-
-btnLogin.onclick = async () => {
-  const provider = new GoogleAuthProvider();
-  await signInWithPopup(auth, provider);
-};
-
-onAuthStateChanged(auth, user => {
-  const uid = user?.uid || null;
-  const isAdmin = uid === ADMIN_UID;
-
-  window._authState.uid = uid;
-  window._authState.isAdmin = isAdmin;
-
-  btnUid.textContent = "UID: " + (uid || "—");
-  btnLogin.textContent = uid ? "Google connesso ✅" : "Accedi con Google";
-
-  // 🔥 importantissimo: avvia Firestore solo dopo login
-  if (uid) {
-    window.dispatchEvent(new Event("fire-ready"));
-  }
-});
     async addPlayer(name) {
       const uid = window._authState.uid;
       return addDoc(playersCol, {
@@ -1566,12 +1529,15 @@ onAuthStateChanged(auth, user => {
         createdAt: serverTimestamp()
       });
     },
+
     async setPlayer(id, data) {
-      return setDoc(doc(db,"rooms",ROOM_ID,"players",id), data, { merge:true });
+      return setDoc(doc(db, "rooms", ROOM_ID, "players", id), data, { merge: true });
     },
+
     async deletePlayer(id) {
-      return deleteDoc(doc(db,"rooms",ROOM_ID,"players",id));
+      return deleteDoc(doc(db, "rooms", ROOM_ID, "players", id));
     },
+
     async resetAllPlayers() {
       const snap = await getDocs(playersCol);
       const batch = writeBatch(db);
@@ -1580,24 +1546,41 @@ onAuthStateChanged(auth, user => {
     }
   };
 
-  // ✅ setto subito UID dopo anonymous (così isFireReady diventa vero prima)
-
+  // ✅ Login anonimo per tutti (così ogni utente ha un uid)
+  try {
+    await signInAnonymously(auth);
+  } catch (e) {
+    console.error("Anon login failed:", e);
+  }
 
   const btnLogin = document.getElementById("btnAdminLogin");
-  const btnUid   = document.getElementById("btnShowUid");
+  const btnUid = document.getElementById("btnShowUid");
 
-  btnLogin.onclick = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
-  };
+  // login Google (solo se vuoi diventare admin)
+  btnLogin?.addEventListener("click", async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      console.error("Google popup failed:", e);
+      alert("Popup Google bloccato o errore login. Prova ad abilitare i popup per questo sito.");
+    }
+  });
 
+  // aggiorna UI e “accende” la sync Firestore quando abbiamo un uid (anon o google)
   onAuthStateChanged(auth, user => {
     const uid = user?.uid || null;
     const isAdmin = uid === ADMIN_UID;
+
     window._authState.uid = uid;
     window._authState.isAdmin = isAdmin;
-    btnUid.textContent = "UID: " + (uid || "—");
-    console.log("UID:", uid, "Admin:", isAdmin);
+
+    if (btnUid) btnUid.textContent = "UID: " + (uid || "—");
+    if (btnLogin) btnLogin.textContent = uid ? "Google connesso ✅" : "Accedi con Google";
+
+    if (uid) {
+      window.dispatchEvent(new Event("fire-ready"));
+    }
   });
 </script>
 
@@ -1614,6 +1597,7 @@ onAuthStateChanged(auth, user => {
 
 </body>
 </html>
+
 
 
 
